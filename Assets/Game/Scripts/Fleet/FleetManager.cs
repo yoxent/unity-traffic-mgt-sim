@@ -63,6 +63,8 @@ namespace TrafficSim.Fleet
             return vehicle.Def.speed * (1f + tier * 0.1f);
         }
 
+        public IEnumerable<VehicleInstance> GetAllVehicles() => _vehiclesById.Values;
+
         public bool BuyVehicle(ServiceModule module, VehicleDef def)
         {
             if (def == null || !CanServeModule(def, module) || _state.Money < def.purchaseCost)

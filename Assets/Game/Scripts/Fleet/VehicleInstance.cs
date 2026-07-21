@@ -14,6 +14,8 @@ namespace TrafficSim.Fleet
         public float Durability { get; private set; }
         public float CooldownRemaining { get; private set; }
         public int? CurrentOrderId { get; private set; }
+        public int CurrentNodeId { get; private set; }
+        public Vector3 Position { get; private set; }
 
         public VehicleInstance(int id, VehicleDef def, ServiceModule module)
         {
@@ -68,5 +70,11 @@ namespace TrafficSim.Fleet
         public void Repair() => Durability = Def.maxDurability;
 
         public void MarkOffline() => State = VehicleState.Offline;
+
+        public void SetLocation(Vector3 position, int nodeId)
+        {
+            Position = position;
+            CurrentNodeId = nodeId;
+        }
     }
 }
