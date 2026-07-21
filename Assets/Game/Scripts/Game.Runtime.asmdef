@@ -1,0 +1,14 @@
+{
+  "name": "Game.Runtime",
+  "rootNamespace": "TrafficSim",
+  "references": [
+    "Unity.InputSystem",
+    "Unity.Splines",
+    "Unity.Mathematics",
+    "LitMotion",
+    "ZLinq.Unity"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false
+}
