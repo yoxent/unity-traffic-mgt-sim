@@ -2,9 +2,7 @@
   "name": "Game.Tests",
   "rootNamespace": "TrafficSim.Tests",
   "references": [
-    "Game.Runtime",
-    "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner"
+    "Game.Runtime"
   ],
   "includePlatforms": ["Editor"],
   "optionalUnityReferences": ["TestAssemblies"]
