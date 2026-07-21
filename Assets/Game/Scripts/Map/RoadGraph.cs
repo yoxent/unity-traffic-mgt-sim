@@ -55,6 +55,21 @@ namespace TrafficSim.Map
             _adjacency[toNodeId].Add((fromNodeId, distance));
         }
 
+        public float EstimatePathDistance(IReadOnlyList<int> path)
+        {
+            if (path == null || path.Count < 2)
+                return 0f;
+
+            var total = 0f;
+            for (var i = 0; i < path.Count - 1; i++)
+                total += GetEdgeDistance(path[i], path[i + 1]);
+
+            return total;
+        }
+
+        public float EstimatePathDistance(int fromNodeId, int toNodeId) =>
+            EstimatePathDistance(FindPath(fromNodeId, toNodeId));
+
         public IReadOnlyList<int> FindPath(int fromNodeId, int toNodeId)
         {
             if (fromNodeId == toNodeId)
