@@ -1,6 +1,7 @@
 using TrafficSim.Core;
 using TrafficSim.Data;
 using TrafficSim.Demand;
+using TrafficSim.Dispatch;
 using UnityEngine;
 
 namespace TrafficSim.Fleet
@@ -16,6 +17,7 @@ namespace TrafficSim.Fleet
         public int? CurrentOrderId { get; private set; }
         public int CurrentNodeId { get; private set; }
         public Vector3 Position { get; private set; }
+        public VehiclePathAgent PathAgent { get; } = new();
 
         public VehicleInstance(int id, VehicleDef def, ServiceModule module)
         {
