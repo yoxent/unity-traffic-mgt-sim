@@ -35,6 +35,8 @@ namespace TrafficSim.Dispatch
             _orderAssignedChannel = orderAssignedChannel;
         }
 
+        public void Tick() => TryAssignPendingOrders();
+
         public void Tick(float deltaTime)
         {
             TryAssignPendingOrders();
