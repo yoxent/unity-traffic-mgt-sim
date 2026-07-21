@@ -19,5 +19,5 @@ Base commit: 7042eb7
 | 13 Overload | complete | | capacity fail via OverloadSystem |
 | 14 Camera & input | pending | | |
 | 15 UI | complete | | HUD, checkpoints, EOD, module purchase |
-| 16 Scene integration | pending | | |
+| 16 Scene integration | complete | | GameBootstrap + MVP_District |
 | 17 Addressables | pending | | |

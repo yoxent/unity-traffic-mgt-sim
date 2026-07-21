@@ -40,8 +40,10 @@ namespace TrafficSim.Dispatch
         public void Tick(float deltaTime)
         {
             TryAssignPendingOrders();
-            TickActiveRoutes(deltaTime);
+            TickPathAgents(deltaTime);
         }
+
+        public void TickPathAgents(float deltaTime) => TickActiveRoutes(deltaTime);
 
         void TryAssignPendingOrders()
         {
