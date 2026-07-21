@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TrafficSim.Data;
 using TrafficSim.Systems;
 
@@ -11,6 +12,8 @@ namespace TrafficSim.Core
         readonly RatingDef _ratingDef;
         readonly DayClock _clock;
         readonly EodActionQueue _queue;
+        readonly EconomySystem _economy;
+        readonly IReadOnlyList<HubDef> _activeHubs;
 
         public EodActionQueue Queue => _queue;
 
@@ -22,13 +25,17 @@ namespace TrafficSim.Core
             RatingSystem rating,
             RatingDef ratingDef,
             DayClock clock,
-            EodActionQueue queue = null)
+            EodActionQueue queue = null,
+            EconomySystem economy = null,
+            IReadOnlyList<HubDef> activeHubs = null)
         {
             _state = state;
             _rating = rating;
             _ratingDef = ratingDef;
             _clock = clock;
             _queue = queue ?? new EodActionQueue();
+            _economy = economy;
+            _activeHubs = activeHubs;
         }
 
         public void BeginEod(bool skipIntervention = false)
@@ -53,7 +60,11 @@ namespace TrafficSim.Core
             }
         }
 
-        public void ApplyQueue() => _queue.ApplyAll(_state);
+        public void ApplyQueue()
+        {
+            _economy?.ApplyDailyUpkeep(_activeHubs ?? Array.Empty<HubDef>());
+            _queue.ApplyAll(_state);
+        }
 
         public void AdvanceDay()
         {
