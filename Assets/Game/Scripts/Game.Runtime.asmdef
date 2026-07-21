@@ -1,13 +1,17 @@
 {
   "name": "Game.Runtime",
   "rootNamespace": "TrafficSim",
-  "references": [
-    "Unity.InputSystem",
-    "Unity.Splines",
-    "Unity.Mathematics",
-    "LitMotion",
-    "UnityEngine.UI"
-  ],
+    "references": [
+        "Unity.InputSystem",
+        "Unity.Splines",
+        "Unity.Mathematics",
+        "LitMotion",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro",
+        "ZLinq.Unity",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false

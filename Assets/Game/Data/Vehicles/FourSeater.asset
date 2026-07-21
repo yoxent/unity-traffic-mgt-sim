@@ -25,5 +25,6 @@ MonoBehaviour:
   - 0
   - 2
   allowedSizeBands:
+  - 1
   - 2
   - 4

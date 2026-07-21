@@ -1,0 +1,18 @@
+{
+  "name": "Game.Editor",
+  "rootNamespace": "TrafficSim.Editor",
+  "references": [
+    "Game.Runtime",
+    "Unity.Addressables",
+    "Unity.Addressables.Editor",
+    "Unity.ResourceManager",
+    "Unity.InputSystem",
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false
+}

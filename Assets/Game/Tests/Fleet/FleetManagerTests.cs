@@ -113,10 +113,10 @@ namespace TrafficSim.Tests.Fleet
         public void QueueScrap_RemovesIdleVehicleOnApply()
         {
             var def = CreateTestVehicleDef();
-            var state = new RunState();
+            var state = new RunState { Money = 150f };
             var queue = new EodActionQueue();
             var manager = new FleetManager(state, queue);
-            manager.BuyVehicle(ServiceModule.Food, def);
+            Assert.IsTrue(manager.BuyVehicle(ServiceModule.Food, def));
             var vehicle = manager.GetVehicles(ServiceModule.Food, VehicleType.Motorbike)[0];
 
             manager.QueueScrap(vehicle.Id);

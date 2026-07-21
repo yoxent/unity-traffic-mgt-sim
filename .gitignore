@@ -105,3 +105,14 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Cursor IDE local rules / state
+.cursor/
+
+# Scratch / debug dumps
+/errors.txt
+/testrunner-errors.txt
+
+# NuGetForUnity package cache (installed DLLs live under Assets/Plugins)
+/[Aa]ssets/Packages/
+/[Aa]ssets/Packages.meta

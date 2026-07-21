@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using TrafficSim.Core;
+using TrafficSim.Core.Contracts;
 using TrafficSim.Data;
 using TrafficSim.Map;
 using UnityEngine;
 
 namespace TrafficSim.Demand
 {
-    public sealed class DemandSpawner
+    public sealed class DemandSpawner : IDemandSource
     {
         readonly DemandWaveDef _waveDef;
         readonly float _dayLengthSeconds;

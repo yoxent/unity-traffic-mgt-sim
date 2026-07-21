@@ -1,5 +1,6 @@
 using System.Text;
 using TrafficSim.Core;
+using TrafficSim.Core.Contracts;
 using TrafficSim.Demand;
 using UnityEngine;
 
@@ -9,11 +10,11 @@ namespace TrafficSim.UI
     {
         [SerializeField] UiTextRef[] _checkpointLines = new UiTextRef[3];
 
-        DemandSpawner _spawner;
+        IDemandSource _spawner;
         DayClock _clock;
         float _dayLengthSeconds;
 
-        public void Bind(DemandSpawner spawner, DayClock clock, float dayLengthSeconds)
+        public void Bind(IDemandSource spawner, DayClock clock, float dayLengthSeconds)
         {
             _spawner = spawner;
             _clock = clock;

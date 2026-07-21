@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace UnityMcpPro.Tests
 {
@@ -100,6 +103,7 @@ namespace UnityMcpPro.Tests
                 @params = new Dictionary<string, object>()
             };
 
+            LogAssert.Expect(LogType.Error, new Regex(@"\[MCP\] Command error \(boom\): kaboom"));
             _router.Dispatch(request, r => response = r);
 
             Assert.IsNotNull(response);
