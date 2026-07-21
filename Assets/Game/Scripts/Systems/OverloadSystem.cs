@@ -1,6 +1,7 @@
 using TrafficSim.Core;
+using TrafficSim.Core.Contracts;
+using TrafficSim.Core.Linq;
 using TrafficSim.Data;
-using TrafficSim.Hubs;
 using UnityEngine;
 
 namespace TrafficSim.Systems
@@ -8,10 +9,10 @@ namespace TrafficSim.Systems
     public sealed class OverloadSystem
     {
         readonly RunState _state;
-        readonly HubManager _hubManager;
+        readonly IHubManager _hubManager;
         readonly OverloadDef _def;
 
-        public OverloadSystem(RunState state, HubManager hubManager, OverloadDef def)
+        public OverloadSystem(RunState state, IHubManager hubManager, OverloadDef def)
         {
             _state = state;
             _hubManager = hubManager;
@@ -29,11 +30,7 @@ namespace TrafficSim.Systems
 
         int GetCapacityThreshold()
         {
-            var total = 0;
-
-            foreach (var hub in _hubManager.GetHubs())
-                total += hub.Capacity;
-
+            var total = SimLinq.SumHubCapacity(_hubManager.GetHubs());
             return Mathf.Max(0, Mathf.RoundToInt(total * _def.capacityMultiplier));
         }
     }

@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using TrafficSim.Core;
+using TrafficSim.Core.Contracts;
 using TrafficSim.Data;
 using TrafficSim.Demand;
 
 namespace TrafficSim.Hubs
 {
-    public sealed class HubManager
+    public sealed class HubManager : IHubManager
     {
         readonly RunState _state;
         readonly EodActionQueue _eodQueue;
@@ -14,6 +15,7 @@ namespace TrafficSim.Hubs
         readonly Dictionary<int, HubInstance> _hubsById = new();
         readonly Dictionary<int, int> _slotToHubId = new();
         readonly List<OrderInstance> _cityQueue = new();
+        readonly HashSet<int> _acceptedOrderIds = new();
         int _nextHubId = 1;
         int? _closingHubId;
 
@@ -125,6 +127,9 @@ namespace TrafficSim.Hubs
             if (order == null || order.State != OrderState.Pending)
                 return false;
 
+            if (_acceptedOrderIds.Contains(order.Id))
+                return true;
+
             var targetHub = FindAcceptingHub(order.Module, out var fromClosingHub);
             if (targetHub != null)
             {
@@ -132,12 +137,14 @@ namespace TrafficSim.Hubs
                     TransferWarning?.Invoke(_closingHubId.Value, 1);
 
                 targetHub.AddOrder(order);
+                _acceptedOrderIds.Add(order.Id);
                 return true;
             }
 
             if (_closingHubId.HasValue)
             {
                 _cityQueue.Add(order);
+                _acceptedOrderIds.Add(order.Id);
                 return true;
             }
 

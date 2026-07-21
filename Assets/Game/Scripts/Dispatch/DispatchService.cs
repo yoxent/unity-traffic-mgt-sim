@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using TrafficSim.Core;
+using TrafficSim.Core.Contracts;
+using TrafficSim.Core.Linq;
 using TrafficSim.Demand;
 using TrafficSim.Events;
 using TrafficSim.Fleet;
@@ -8,7 +10,7 @@ using TrafficSim.Map;
 
 namespace TrafficSim.Dispatch
 {
-    public sealed class DispatchService
+    public sealed class DispatchService : IDispatchService
     {
         readonly FleetManager _fleet;
         readonly RoadGraph _graph;
@@ -70,8 +72,17 @@ namespace TrafficSim.Dispatch
 
         void TickActiveRoutes(float deltaTime)
         {
+            var count = _activeRoutes.Count;
+            if (count == 0)
+                return;
+
+            var agents = new VehiclePathAgent[count];
+            var index = 0;
             foreach (var pair in _activeRoutes)
-                pair.Value.Agent.Tick(deltaTime);
+                agents[index++] = pair.Value.Agent;
+
+            for (var i = 0; i < agents.Length; i++)
+                agents[i].Tick(deltaTime);
         }
 
         void StartRoute(VehicleInstance vehicle, OrderInstance order, IReadOnlyList<int> path)
@@ -103,35 +114,18 @@ namespace TrafficSim.Dispatch
             route.Order.MarkCompleted();
         }
 
-        bool TryFindNearestEligibleVehicle(OrderInstance order, out VehicleInstance nearest)
-        {
-            nearest = null;
-            var bestDistance = float.MaxValue;
+        bool TryFindNearestEligibleVehicle(OrderInstance order, out VehicleInstance nearest) =>
+            SimLinq.TryFindNearestEligibleVehicle(
+                _fleet.GetAllVehicles(),
+                _graph,
+                order,
+                BuildPathForDispatch,
+                out nearest);
 
-            foreach (var vehicle in _fleet.GetAllVehicles())
-            {
-                if (vehicle.Module != order.Module || !vehicle.IsDispatchEligible)
-                    continue;
-
-                if (!vehicle.Def.CanServe(order.Module, order.SizeBand))
-                    continue;
-
-                if (!TryBuildJobPath(_graph, vehicle.CurrentNodeId, order.PickupNode, order.DropoffNode, out var path))
-                    continue;
-
-                var distance = _graph.EstimatePathDistance(path);
-                if (distance > vehicle.Def.maxRange)
-                    continue;
-
-                if (distance < bestDistance)
-                {
-                    bestDistance = distance;
-                    nearest = vehicle;
-                }
-            }
-
-            return nearest != null;
-        }
+        IReadOnlyList<int> BuildPathForDispatch(VehicleInstance vehicle, OrderInstance order) =>
+            TryBuildJobPath(_graph, vehicle.CurrentNodeId, order.PickupNode, order.DropoffNode, out var path)
+                ? path
+                : null;
 
         static bool TryBuildJobPath(
             RoadGraph graph,

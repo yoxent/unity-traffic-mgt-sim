@@ -26,7 +26,7 @@ namespace TrafficSim.UI
                 return;
 
             _moneyText?.SetText($"${Mathf.FloorToInt(_state.Money)}");
-            _starsText?.SetText($"{_state.CurrentStars:F1}★");
+            _starsText?.SetText($"{_state.CurrentStars:F1} stars");
             _dayText?.SetText($"Day {_state.DayIndex + 1}");
             _speedText?.SetText(FormatSpeed());
             _timeOfDayText?.SetText(FormatTimeOfDay(_clock.DayFraction));
