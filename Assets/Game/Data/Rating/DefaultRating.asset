@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3e8f4c23b5d4678901ab2c3d4e5f67a, type: 3}
+  m_Name: DefaultRating
+  m_EditorClassIdentifier: 
+  streakFailDays: 3
+  bandThreshold1: 0.2
+  bandThreshold2: 0.4
+  bandThreshold3: 0.6
+  bandThreshold4: 0.8
+  expiredDelta: -0.5
+  band0Delta: -0.25
+  band1Delta: -0.1
+  band2Delta: 0.02
+  band3Delta: 0.1
+  band4Delta: 0.2
+  minStarsForTips: 3

@@ -5,8 +5,7 @@
     "Unity.InputSystem",
     "Unity.Splines",
     "Unity.Mathematics",
-    "LitMotion",
-    "ZLinq.Unity"
+    "LitMotion"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
