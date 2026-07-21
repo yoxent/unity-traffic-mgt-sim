@@ -6,4 +6,5 @@ namespace TrafficSim.Core
     public enum VehicleState { Idle, EnRoute, Cooldown, Offline }
     public enum HubState { Active, Closing, Relocating }
     public enum RunPhase { Playing, EodIntervention, Failed, Won }
+    public enum OrderState { Pending, Assigned, Completed, Expired }
 }

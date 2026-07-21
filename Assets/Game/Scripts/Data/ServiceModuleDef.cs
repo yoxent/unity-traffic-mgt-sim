@@ -12,5 +12,8 @@ namespace TrafficSim.Data
         public float unlockCost;
         public int starterVehicleCount = 1;
         public VehicleType starterVehicleType;
+        public AnimationCurve demandWeightByDayFraction = AnimationCurve.Constant(0f, 1f, 1f);
+        public float basePatienceSeconds = 120f;
+        public float graceSeconds = 30f;
     }
 }
