@@ -15,5 +15,7 @@ namespace TrafficSim.Core.Contracts
         bool TryAcceptOrder(OrderInstance order);
         void Tick(float deltaTime);
         void UnlockSlot(int slotId);
+        bool IsSlotUnlocked(int slotId);
+        bool IsSlotOccupied(int slotId);
     }
 }

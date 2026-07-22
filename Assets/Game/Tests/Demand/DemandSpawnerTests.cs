@@ -41,14 +41,20 @@ namespace TrafficSim.Tests.Demand
         static DemandSpawner CreateSpawner(
             DemandWaveDef waveDef,
             ServiceModuleDef moduleDef,
-            RoadGraph graph)
+            RoadGraph graph,
+            HouseRegistry houses = null)
         {
             var moduleDefs = new Dictionary<ServiceModule, ServiceModuleDef>
             {
                 { ServiceModule.Food, moduleDef }
             };
 
-            return new DemandSpawner(waveDef, DayLengthSeconds, moduleDefs, graph);
+            return new DemandSpawner(
+                waveDef,
+                DayLengthSeconds,
+                moduleDefs,
+                graph,
+                houses ?? new HouseRegistry(System.Array.Empty<HouseInstance>()));
         }
 
         [Test]

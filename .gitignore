@@ -51,6 +51,7 @@ ExportedObj/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -62,6 +63,14 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
+
+# Visual Studio / Rider Unity tooling (machine-local)
+.vsconfig
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
 
 # Unity3D generated meta files
 *.pidb.meta

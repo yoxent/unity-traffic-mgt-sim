@@ -25,7 +25,12 @@ namespace TrafficSim.Systems
                 return;
 
             if (_hubManager.GetUnassignedOrderCount() > GetCapacityThreshold())
+            {
+                var pending = _hubManager.GetUnassignedOrderCount();
+                var capacity = GetCapacityThreshold();
+                SimLog.OverloadInfo($"Overload fail pending={pending} capacity={capacity}");
                 _state.Phase = RunPhase.Failed;
+            }
         }
 
         int GetCapacityThreshold()

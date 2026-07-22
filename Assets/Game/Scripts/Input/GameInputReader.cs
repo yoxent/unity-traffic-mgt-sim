@@ -73,6 +73,7 @@ namespace TrafficSim.Input
                 return;
 
             _clock.IsPaused = !_clock.IsPaused;
+            SimLog.Info("Input", _clock.IsPaused ? "Paused" : "Unpaused");
         }
 
         void OnSpeedCyclePerformed(InputAction.CallbackContext _)
@@ -82,6 +83,7 @@ namespace TrafficSim.Input
 
             var next = _clock.TimeScale >= 3 ? 1 : _clock.TimeScale + 1;
             _clock.SetTimeScale(next);
+            SimLog.Info("Input", $"TimeScale → {_clock.TimeScale}x");
         }
 
         void OnDestroy()

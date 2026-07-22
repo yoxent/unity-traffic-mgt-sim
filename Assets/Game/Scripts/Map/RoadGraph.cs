@@ -13,6 +13,23 @@ namespace TrafficSim.Map
 
         public Vector3 GetNodePosition(int nodeId) => _nodePositions[nodeId];
 
+        public void ForEachUndirectedEdge(Action<int, int> action)
+        {
+            if (action == null)
+                return;
+
+            for (var from = 0; from < _adjacency.Count; from++)
+            {
+                var neighbors = _adjacency[from];
+                for (var i = 0; i < neighbors.Count; i++)
+                {
+                    var to = neighbors[i].neighborId;
+                    if (from < to)
+                        action(from, to);
+                }
+            }
+        }
+
         public float GetEdgeDistance(int fromNodeId, int toNodeId)
         {
             foreach (var (neighborId, distance) in _adjacency[fromNodeId])
@@ -22,6 +39,78 @@ namespace TrafficSim.Map
             }
 
             throw new ArgumentException($"No edge from node {fromNodeId} to node {toNodeId}.");
+        }
+
+        public bool HasEdge(int fromNodeId, int toNodeId)
+        {
+            if (fromNodeId < 0 || fromNodeId >= NodeCount || toNodeId < 0 || toNodeId >= NodeCount)
+                return false;
+
+            foreach (var (neighborId, _) in _adjacency[fromNodeId])
+            {
+                if (neighborId == toNodeId)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static RoadGraph BuildFromPolylines(IReadOnlyList<IReadOnlyList<Vector3>> polylines)
+        {
+            var graph = new RoadGraph();
+            var nodeIndexByCell = new Dictionary<Vector2Int, int>();
+
+            if (polylines == null || polylines.Count == 0)
+                throw new ArgumentException("At least one polyline with nodes is required.", nameof(polylines));
+
+            var hasNodes = false;
+            for (var p = 0; p < polylines.Count; p++)
+            {
+                if (polylines[p] != null && polylines[p].Count > 0)
+                {
+                    hasNodes = true;
+                    break;
+                }
+            }
+
+            if (!hasNodes)
+                throw new ArgumentException("At least one polyline with nodes is required.", nameof(polylines));
+
+            for (var p = 0; p < polylines.Count; p++)
+            {
+                var polyline = polylines[p];
+                if (polyline == null || polyline.Count == 0)
+                    continue;
+
+                var previous = GetOrAddNode(graph, nodeIndexByCell, polyline[0]);
+                for (var i = 1; i < polyline.Count; i++)
+                {
+                    var current = GetOrAddNode(graph, nodeIndexByCell, polyline[i]);
+                    if (previous != current && !graph.HasEdge(previous, current))
+                    {
+                        var distance = Vector3.Distance(
+                            graph.GetNodePosition(previous),
+                            graph.GetNodePosition(current));
+                        graph.AddUndirectedEdge(previous, current, distance);
+                    }
+
+                    previous = current;
+                }
+            }
+
+            return graph;
+        }
+
+        static int GetOrAddNode(RoadGraph graph, Dictionary<Vector2Int, int> nodeIndexByCell, Vector3 position)
+        {
+            var cell = MapGridSpec.WorldToCell(position);
+            if (nodeIndexByCell.TryGetValue(cell, out var nodeId))
+                return nodeId;
+
+            nodeId = graph.NodeCount;
+            graph.AddNode(MapGridSpec.CellCenter(cell));
+            nodeIndexByCell[cell] = nodeId;
+            return nodeId;
         }
 
         public static RoadGraph BuildLineGraph(IReadOnlyList<Vector3> positions)

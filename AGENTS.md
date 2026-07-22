@@ -33,8 +33,8 @@ GameBootstrap (MonoBehaviour, scene entry)
 |------|--------|
 | Render | URP 2D orthographic |
 | Input | Unity Input System |
-| UI | **uGUI (Canvas)** + **TextMeshPro** — HUD, EOD panel, module purchase, demand checkpoints |
-| Animation | LitMotion (camera) |
+| UI | **uGUI (Canvas)** + **TextMeshPro** — HUD (money/stars/day/clock + day progress), EOD panel, module purchase, demand checkpoints |
+| Animation | LitMotion (camera zoom `OutQuad`, no bounce) |
 | Paths | Unity Splines (Slice 2); MVP uses node lerp |
 | Queries | **ZLinq** via `TrafficSim.Core.Linq.SimLinq` helpers |
 | Maps | Addressables group `Maps`, address `Maps/TutorialDistrict` |
@@ -77,6 +77,7 @@ Assets/Game/Editor/             AddressablesMapSetup menu
 - Namespace root: `TrafficSim`
 - Runtime asmdef: `Game.Runtime`; tests: `Game.Tests`; editor: `Game.Editor`
 - Event subscriptions from MonoBehaviours: unsubscribe in `OnDestroy`; use `EventChannelSubscriptions` or `SimEventBridge` pattern
+- Play-mode logs: `SimLog` → Console filter `[TrafficSim`
 - Commits: only when user asks; follow existing `feat:` / `fix:` style
 - No ECS in MVP; optional later
 

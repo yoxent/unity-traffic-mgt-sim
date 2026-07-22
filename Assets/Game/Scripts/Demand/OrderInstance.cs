@@ -10,8 +10,9 @@ namespace TrafficSim.Demand
         public int Id { get; }
         public ServiceModule Module { get; }
         public JobSizeBand SizeBand { get; }
-        public int PickupNode { get; }
+        public int PickupNode { get; private set; }
         public int DropoffNode { get; }
+        public int DestinationHouseId { get; }
         public float PatienceTotal { get; }
         public float PatienceRemaining { get; private set; }
         public float GraceRemaining { get; private set; }
@@ -28,19 +29,23 @@ namespace TrafficSim.Demand
             int pickupNode,
             int dropoffNode,
             float patienceTotal,
-            float graceTotal)
+            float graceTotal,
+            int destinationHouseId = -1)
         {
             Id = id;
             Module = module;
             SizeBand = sizeBand;
             PickupNode = pickupNode;
             DropoffNode = dropoffNode;
+            DestinationHouseId = destinationHouseId;
             PatienceTotal = patienceTotal;
             PatienceRemaining = patienceTotal;
             _graceTotal = graceTotal;
             GraceRemaining = graceTotal;
             State = OrderState.Pending;
         }
+
+        public void SetPickupNode(int pickupNode) => PickupNode = pickupNode;
 
         public float RemainingFraction
         {

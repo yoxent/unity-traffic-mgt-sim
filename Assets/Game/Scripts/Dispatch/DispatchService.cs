@@ -67,6 +67,10 @@ namespace TrafficSim.Dispatch
                 order.MarkAssigned();
                 StartRoute(vehicle, order, path);
                 _orderAssignedChannel?.Raise(new OrderEventPayload(order.Id, order.Module));
+                SimLog.DispatchInfo(
+                    $"Assigned order {order.Id} ({order.Module}/{order.SizeBand}) → " +
+                    $"vehicle {vehicle.Id} ({vehicle.Def.type}) pathLen={path.Count} " +
+                    $"nodes {vehicle.CurrentNodeId}→{order.PickupNode}→{order.DropoffNode}");
             }
         }
 
@@ -76,13 +80,18 @@ namespace TrafficSim.Dispatch
             if (count == 0)
                 return;
 
-            var agents = new VehiclePathAgent[count];
+            var routes = new ActiveRoute[count];
             var index = 0;
             foreach (var pair in _activeRoutes)
-                agents[index++] = pair.Value.Agent;
+                routes[index++] = pair.Value;
 
-            for (var i = 0; i < agents.Length; i++)
-                agents[i].Tick(deltaTime);
+            for (var i = 0; i < routes.Length; i++)
+            {
+                var route = routes[i];
+                route.Agent.Tick(deltaTime);
+                if (route.Agent.IsActive)
+                    route.Vehicle.SetLocation(route.Agent.Position, route.Vehicle.CurrentNodeId);
+            }
         }
 
         void StartRoute(VehicleInstance vehicle, OrderInstance order, IReadOnlyList<int> path)
@@ -112,6 +121,8 @@ namespace TrafficSim.Dispatch
             route.Vehicle.SetLocation(_graph.GetNodePosition(dropoffNode), dropoffNode);
             route.Vehicle.CompleteJob();
             route.Order.MarkCompleted();
+            SimLog.DispatchInfo(
+                $"Route complete vehicle={vehicleId} order={route.Order.Id} at node={dropoffNode}");
         }
 
         bool TryFindNearestEligibleVehicle(OrderInstance order, out VehicleInstance nearest) =>
@@ -135,6 +146,9 @@ namespace TrafficSim.Dispatch
             out List<int> path)
         {
             path = null;
+
+            if (pickupNodeId < 0 || dropoffNodeId < 0)
+                return false;
 
             var toPickup = graph.FindPath(fromNodeId, pickupNodeId);
             if (toPickup.Count == 0)

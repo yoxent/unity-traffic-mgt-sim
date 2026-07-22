@@ -14,6 +14,7 @@ namespace TrafficSim.Demand
         readonly float _dayLengthSeconds;
         readonly IReadOnlyDictionary<ServiceModule, ServiceModuleDef> _moduleDefs;
         readonly RoadGraph _graph;
+        readonly HouseRegistry _houses;
         readonly List<OrderInstance> _orders = new();
         readonly HashSet<int> _spawnedWaveIndices = new();
         int _nextOrderId = 1;
@@ -23,12 +24,14 @@ namespace TrafficSim.Demand
             DemandWaveDef waveDef,
             float dayLengthSeconds,
             IReadOnlyDictionary<ServiceModule, ServiceModuleDef> moduleDefs,
-            RoadGraph graph)
+            RoadGraph graph,
+            HouseRegistry houses)
         {
             _waveDef = waveDef ?? throw new ArgumentNullException(nameof(waveDef));
             _dayLengthSeconds = dayLengthSeconds;
             _moduleDefs = moduleDefs ?? throw new ArgumentNullException(nameof(moduleDefs));
             _graph = graph ?? throw new ArgumentNullException(nameof(graph));
+            _houses = houses ?? new HouseRegistry(Array.Empty<HouseInstance>());
         }
 
         public IReadOnlyList<OrderInstance> Orders => _orders;
@@ -100,18 +103,37 @@ namespace TrafficSim.Demand
             for (var i = 0; i < spawnCount; i++)
             {
                 var orderId = _nextOrderId++;
-                var pickupNode = orderId % _graph.NodeCount;
-                var dropoffNode = (pickupNode + 1) % _graph.NodeCount;
+                var (dropoffNode, destinationHouseId) = ResolveDestination(orderId);
 
                 _orders.Add(new OrderInstance(
                     orderId,
                     entry.module,
                     entry.sizeBand,
-                    pickupNode,
+                    pickupNode: -1,
                     dropoffNode,
                     moduleDef.basePatienceSeconds,
-                    moduleDef.graceSeconds));
+                    moduleDef.graceSeconds,
+                    destinationHouseId));
             }
+
+            SimLog.DemandInfo(
+                $"Wave spawned module={entry.module} band={entry.sizeBand} count={spawnCount} " +
+                $"dayFrac={dayFraction:F3} (~{entry.daySecond}s) totalOrders={_orders.Count}");
+        }
+
+        (int dropoffNode, int destinationHouseId) ResolveDestination(int orderId)
+        {
+            if (_houses.Count > 0)
+            {
+                var house = _houses.GetByIndex(orderId % _houses.Count);
+                return (house.DropoffNodeId, house.Id);
+            }
+
+            if (_graph.NodeCount == 0)
+                return (-1, -1);
+
+            var fallbackNode = orderId % _graph.NodeCount;
+            return (fallbackNode, -1);
         }
 
         int GetSpawnCount(DemandWaveEntry entry, float dayFraction)

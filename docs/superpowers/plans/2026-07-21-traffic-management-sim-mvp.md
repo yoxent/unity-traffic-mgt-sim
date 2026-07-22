@@ -49,7 +49,7 @@
 | `Assets/Game/Scripts/Systems/OverloadSystem.cs` | Capacity fail |
 | `Assets/Game/Scripts/Hubs/HubManager.cs` | Place/close/relocate/queue |
 | `Assets/Game/Scripts/Input/GameInputActions.cs` | Input System wrapper |
-| `Assets/Game/Scripts/Camera/OrthoPanZoomCamera.cs` | Pan/zoom + LitMotion |
+| `Assets/Game/Scripts/Camera/OrthoPanZoomCamera.cs` | Pan/zoom + LitMotion `OutQuad` (no bounce) |
 | `Assets/Game/Scripts/UI/*.cs` | HUD, checkpoints, EOD panel |
 | `Assets/Game/Data/` | SO asset instances |
 | `Assets/Game/Scenes/MVP_District.unity` | Vertical slice scene |
@@ -701,7 +701,7 @@ git commit -m "feat: add overload fail condition"
 - Modify: `Assets/InputSystem_Actions.inputactions` (add Pan, Zoom, Speed, Pause actions)
 
 **Interfaces:**
-- Produces: `OrthoPanZoomCamera.OnPan(Vector2 delta)`, `OnZoom(float delta)` with LitMotion damped zoom.
+- Produces: `OrthoPanZoomCamera.OnPan(Vector2 delta)`, `OnZoom(float delta)` with LitMotion `OutQuad` damped zoom (no bounce).
 
 - [ ] **Step 1: Add Input actions**
 
@@ -737,7 +737,7 @@ git commit -m "feat: add orthographic pan/zoom camera and game input"
 
 - [ ] **Step 1: GameHud**
 
-Display money, stars, day #, time of day icon, speed indicator.
+Display money, stars, day #, clock (`HH:MM` from day fraction, day starts 06:00) with period label (Morning/Day/Evening/Night), day-progress fill bar, speed indicator.
 
 - [ ] **Step 2: DemandCheckpointPanel**
 

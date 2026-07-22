@@ -4,6 +4,7 @@ using TrafficSim.Core;
 using TrafficSim.Data;
 using TrafficSim.Events;
 using TrafficSim.Input;
+using TrafficSim.Map;
 using TrafficSim.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -30,6 +31,7 @@ namespace TrafficSim.Editor
             EnsureCamera();
             var bootstrap = EnsureGameObject("SimSystems", typeof(GameBootstrap));
             var input = EnsureGameObject("GameInput", typeof(GameInputReader));
+            var worldView = EnsureGameObject("WorldView", typeof(MapWorldView));
             var canvas = EnsureCanvas();
             ClearManagedUi(canvas.transform);
 
@@ -38,7 +40,14 @@ namespace TrafficSim.Editor
             var eod = BuildEodPanel(canvas.transform);
             var modules = BuildModulePanel(canvas.transform);
 
-            WireBootstrap(bootstrap.GetComponent<GameBootstrap>(), hud, demand, eod, modules, input.GetComponent<GameInputReader>());
+            WireBootstrap(
+                bootstrap.GetComponent<GameBootstrap>(),
+                hud,
+                demand,
+                eod,
+                modules,
+                input.GetComponent<GameInputReader>(),
+                worldView.GetComponent<MapWorldView>());
             WireInput(input.GetComponent<GameInputReader>());
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -53,7 +62,9 @@ namespace TrafficSim.Editor
                 cameraGo.AddComponent<UnityEngine.Camera>();
 
             cameraGo.tag = "MainCamera";
-            cameraGo.transform.position = new Vector3(0f, 0f, -10f);
+            // Top-down orthographic: look down -Y onto the XZ map plane.
+            cameraGo.transform.position = new Vector3(5f, 30f, 5f);
+            cameraGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             if (cameraGo.GetComponent<AudioListener>() == null)
                 cameraGo.AddComponent<AudioListener>();
@@ -63,7 +74,9 @@ namespace TrafficSim.Editor
 
             var cam = cameraGo.GetComponent<UnityEngine.Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 12f;
+            cam.orthographicSize = 14f;
+            cam.nearClipPlane = 0.1f;
+            cam.farClipPlane = 100f;
         }
 
         static GameObject EnsureCanvas()
@@ -114,22 +127,62 @@ namespace TrafficSim.Editor
 
         static GameHud BuildHud(Transform parent)
         {
-            var root = CreatePanel("Hud", parent, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(12f, -12f), new Vector2(360f, 120f));
+            var root = CreatePanel("Hud", parent, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(12f, -12f), new Vector2(360f, 156f));
             var hud = root.AddComponent<GameHud>();
 
             var money = CreateText("MoneyText", root.transform, "$0", new Vector2(0f, 0f));
             var stars = CreateText("StarsText", root.transform, "3.0 stars", new Vector2(0f, -24f));
             var day = CreateText("DayText", root.transform, "Day 1", new Vector2(0f, -48f));
-            var speed = CreateText("SpeedText", root.transform, "1x", new Vector2(0f, -72f));
+            var clock = CreateText("ClockText", root.transform, "06:00 · Morning", new Vector2(0f, -72f));
             var time = CreateText("TimeOfDayText", root.transform, "Morning", new Vector2(0f, -96f));
+            time.gameObject.SetActive(false); // period is shown on ClockText; keep ref for older layouts
+            var speed = CreateText("SpeedText", root.transform, "1x", new Vector2(0f, -96f));
+            var progressFill = CreateDayProgressBar(root.transform, new Vector2(8f, -128f), new Vector2(344f, 12f));
 
             SetUiTextRef(hud, "_moneyText", money);
             SetUiTextRef(hud, "_starsText", stars);
             SetUiTextRef(hud, "_dayText", day);
-            SetUiTextRef(hud, "_speedText", speed);
+            SetUiTextRef(hud, "_clockText", clock);
             SetUiTextRef(hud, "_timeOfDayText", time);
+            SetUiTextRef(hud, "_speedText", speed);
+
+            var hudSo = new SerializedObject(hud);
+            hudSo.FindProperty("_dayProgressFill").objectReferenceValue = progressFill;
+            hudSo.ApplyModifiedPropertiesWithoutUndo();
 
             return hud;
+        }
+
+        static Image CreateDayProgressBar(Transform parent, Vector2 anchoredPos, Vector2 size)
+        {
+            var trackGo = new GameObject("DayProgressTrack", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            trackGo.transform.SetParent(parent, false);
+            var trackImage = trackGo.GetComponent<Image>();
+            trackImage.color = new Color(0.15f, 0.15f, 0.18f, 0.85f);
+
+            var trackRect = trackGo.GetComponent<RectTransform>();
+            trackRect.anchorMin = new Vector2(0f, 1f);
+            trackRect.anchorMax = new Vector2(0f, 1f);
+            trackRect.pivot = new Vector2(0f, 1f);
+            trackRect.anchoredPosition = anchoredPos;
+            trackRect.sizeDelta = size;
+
+            var fillGo = new GameObject("DayProgressFill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            fillGo.transform.SetParent(trackGo.transform, false);
+            var fillImage = fillGo.GetComponent<Image>();
+            fillImage.color = new Color(0.95f, 0.78f, 0.28f, 1f);
+            fillImage.type = Image.Type.Filled;
+            fillImage.fillMethod = Image.FillMethod.Horizontal;
+            fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fillImage.fillAmount = 0f;
+
+            var fillRect = fillGo.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+
+            return fillImage;
         }
 
         static DemandCheckpointPanel BuildDemandPanel(Transform parent)
@@ -210,7 +263,8 @@ namespace TrafficSim.Editor
             DemandCheckpointPanel demand,
             EodPanel eod,
             ModulePurchasePanel modules,
-            GameInputReader input)
+            GameInputReader input,
+            MapWorldView worldView)
         {
             var so = new SerializedObject(bootstrap);
             so.FindProperty("_mapSkeleton").objectReferenceValue =
@@ -253,6 +307,23 @@ namespace TrafficSim.Editor
             so.FindProperty("_demandPanel").objectReferenceValue = demand;
             so.FindProperty("_eodPanel").objectReferenceValue = eod;
             so.FindProperty("_modulePanel").objectReferenceValue = modules;
+            so.FindProperty("_worldView").objectReferenceValue = worldView;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            WireWorldView(worldView);
+        }
+
+        static void WireWorldView(MapWorldView worldView)
+        {
+            var so = new SerializedObject(worldView);
+            so.FindProperty("_roadStraightPrefab").objectReferenceValue =
+                LoadAsset<GameObject>("Assets/Game/Prefabs/World/Roads/Road_NS.prefab");
+            so.FindProperty("_roadCornerPrefab").objectReferenceValue =
+                LoadAsset<GameObject>("Assets/Game/Prefabs/World/Roads/Road_ES.prefab");
+            so.FindProperty("_roadTJunctionPrefab").objectReferenceValue =
+                LoadAsset<GameObject>("Assets/Game/Prefabs/World/Roads/Road_EWS.prefab");
+            so.FindProperty("_roadCrossPrefab").objectReferenceValue =
+                LoadAsset<GameObject>("Assets/Game/Prefabs/World/Roads/Road_NEWS.prefab");
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
