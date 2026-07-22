@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: FoodHub
   m_EditorClassIdentifier: 
   module: 1
+  footprint: {x: 3, y: 3}
   capacity: 3
   dailyUpkeep: 10
   relocateCost: 50

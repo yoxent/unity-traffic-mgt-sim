@@ -39,14 +39,23 @@ namespace TrafficSim.Core
 
         void OnDayEnded()
         {
+            SimLog.EodInfo($"Day clock reached end — beginning EOD (skipUi={TutorialSaveStub.ShouldSkipEodUi})");
             _dayEndedChannel?.Raise();
 
             var skipIntervention = TutorialSaveStub.ShouldSkipEodUi;
             _eod.BeginEod(skipIntervention);
         }
 
-        void OnEodStarted() => _eodStartedChannel?.Raise();
+        void OnEodStarted()
+        {
+            SimLog.EodInfo("EOD intervention / fail UI signal raised");
+            _eodStartedChannel?.Raise();
+        }
 
-        void OnDayAdvanced() => _dayAdvancedChannel?.Raise();
+        void OnDayAdvanced()
+        {
+            SimLog.EodInfo("Next day started");
+            _dayAdvancedChannel?.Raise();
+        }
     }
 }

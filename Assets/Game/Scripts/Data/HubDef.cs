@@ -7,6 +7,7 @@ namespace TrafficSim.Data
     public class HubDef : ScriptableObject
     {
         public ServiceModule module;
+        public Vector2Int footprint = new(3, 3);
         public int capacity = 4;
         public float dailyUpkeep = 10f;
         public float relocateCost = 50f;

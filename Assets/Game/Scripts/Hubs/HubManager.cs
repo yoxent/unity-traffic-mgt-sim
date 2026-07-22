@@ -16,16 +16,19 @@ namespace TrafficSim.Hubs
         readonly Dictionary<int, int> _slotToHubId = new();
         readonly List<OrderInstance> _cityQueue = new();
         readonly HashSet<int> _acceptedOrderIds = new();
+        readonly Func<int, int> _resolvePickupNodeFromSlot;
         int _nextHubId = 1;
         int? _closingHubId;
 
         public HubManager(
             RunState state,
             EodActionQueue eodQueue = null,
-            IEnumerable<int> initialUnlockedSlots = null)
+            IEnumerable<int> initialUnlockedSlots = null,
+            Func<int, int> resolvePickupNodeFromSlot = null)
         {
             _state = state ?? throw new ArgumentNullException(nameof(state));
             _eodQueue = eodQueue ?? new EodActionQueue();
+            _resolvePickupNodeFromSlot = resolvePickupNodeFromSlot;
 
             if (initialUnlockedSlots != null)
             {
@@ -59,11 +62,18 @@ namespace TrafficSim.Hubs
         public bool PlaceHub(HubDef def, int slotId)
         {
             if (def == null || !IsSlotUnlocked(slotId) || IsSlotOccupied(slotId))
+            {
+                SimLog.Warn(
+                    "Hub",
+                    $"PlaceHub failed module={def?.module} slot={slotId} " +
+                    $"unlocked={def != null && IsSlotUnlocked(slotId)} occupied={def != null && IsSlotOccupied(slotId)}");
                 return false;
+            }
 
             var hub = new HubInstance(_nextHubId++, def, slotId);
             _hubsById[hub.Id] = hub;
             _slotToHubId[slotId] = hub.Id;
+            SimLog.HubInfo($"Placed hub {hub.Id} ({def.module}) on slot {slotId}");
             return true;
         }
 
@@ -136,18 +146,29 @@ namespace TrafficSim.Hubs
                 if (fromClosingHub)
                     TransferWarning?.Invoke(_closingHubId.Value, 1);
 
+                AssignPickupNode(order, targetHub.SlotId);
                 targetHub.AddOrder(order);
                 _acceptedOrderIds.Add(order.Id);
+                SimLog.HubInfo(
+                    $"Accepted order {order.Id} ({order.Module}) → hub {targetHub.Id} house={order.DestinationHouseId} " +
+                    $"route {order.PickupNode}→{order.DropoffNode}" +
+                    (fromClosingHub ? " (from closing)" : string.Empty));
                 return true;
             }
 
             if (_closingHubId.HasValue)
             {
+                if (_hubsById.TryGetValue(_closingHubId.Value, out var closingHub))
+                    AssignPickupNode(order, closingHub.SlotId);
+
                 _cityQueue.Add(order);
                 _acceptedOrderIds.Add(order.Id);
+                SimLog.HubInfo(
+                    $"Accepted order {order.Id} ({order.Module}) → city queue (hub closing) house={order.DestinationHouseId}");
                 return true;
             }
 
+            SimLog.HubInfo($"Rejected order {order.Id} ({order.Module}) — no accepting hub");
             return false;
         }
 
@@ -185,6 +206,14 @@ namespace TrafficSim.Hubs
             }
 
             return count;
+        }
+
+        void AssignPickupNode(OrderInstance order, int slotId)
+        {
+            if (_resolvePickupNodeFromSlot == null)
+                return;
+
+            order.SetPickupNode(_resolvePickupNodeFromSlot(slotId));
         }
 
         HubInstance FindAcceptingHub(ServiceModule module, out bool fromClosingHub)

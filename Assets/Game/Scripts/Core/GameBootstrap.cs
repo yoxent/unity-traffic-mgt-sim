@@ -42,19 +42,31 @@ namespace TrafficSim.Core
         [SerializeField] DemandCheckpointPanel _demandPanel;
         [SerializeField] EodPanel _eodPanel;
         [SerializeField] ModulePurchasePanel _modulePanel;
+        [SerializeField] MapWorldView _worldView;
 
         SimSession _session;
         SimLoop _loop;
         SimEventBridge _events;
         MapSkeleton _loadedSkeleton;
+        MapLoadResult _mapLoad;
 
         async void Start()
         {
-            var graph = await LoadGraphAsync();
-            if (graph == null)
-                return;
+            SimLog.BootstrapInfo(
+                $"Start mapAddress='{_mapAddress}' useAddressables={_useAddressables} dayLength={_dayLengthSeconds}s money={_startingMoney}");
 
-            _session = SimComposition.Build(CreateConfig(), graph);
+            _mapLoad = await LoadMapAsync();
+            if (_mapLoad.Graph == null)
+            {
+                SimLog.Error("Bootstrap", "Map load failed — sim will not start.");
+                return;
+            }
+
+            SimLog.MapInfo(
+                $"Graph ready nodes={_mapLoad.Graph.NodeCount} houses={_mapLoad.Houses?.Count ?? 0} " +
+                $"skeleton='{(_loadedSkeleton != null ? _loadedSkeleton.name : "null")}'");
+
+            _session = SimComposition.Build(CreateConfig(), _mapLoad);
             _loop = new SimLoop(
                 _session,
                 _loadedSkeleton ?? _mapSkeleton,
@@ -69,12 +81,19 @@ namespace TrafficSim.Core
                 _dayAdvancedChannel);
 
             WireUi();
+            _worldView?.Bind(_session, _loadedSkeleton ?? _mapSkeleton);
+
             RestoreFreeModuleChoice();
 
             if (_session.State.UnlockedModules.Count == 0)
+            {
                 _session.State.UnlockedModules.Add(ServiceModule.Car);
+                SimLog.ModuleInfo("Default unlock: Car");
+            }
 
             _inputReader?.Bind(_session.Clock);
+            SimLog.BootstrapInfo(
+                $"Session ready phase={_session.State.Phase} money={_session.State.Money:F0} unlocked=[{string.Join(",", _session.State.UnlockedModules)}]");
         }
 
         void OnDestroy()
@@ -103,25 +122,26 @@ namespace TrafficSim.Core
             OrderAssignedChannel = _orderAssignedChannel
         };
 
-        async Awaitable<RoadGraph> LoadGraphAsync()
+        async Awaitable<MapLoadResult> LoadMapAsync()
         {
             if (_useAddressables && !string.IsNullOrWhiteSpace(_mapAddress))
             {
                 var result = await MapLoader.LoadAsync(_mapAddress);
                 if (result.Graph == null)
-                    return null;
+                    return default;
 
                 _loadedSkeleton = result.Skeleton;
-                return result.Graph;
+                return result;
             }
 
             if (_mapSkeleton == null)
             {
-                Debug.LogError("GameBootstrap: assign MapSkeleton or enable Addressables map loading.");
-                return null;
+                SimLog.Error("Bootstrap", "Assign MapSkeleton or enable Addressables map loading.");
+                return default;
             }
 
             _loadedSkeleton = _mapSkeleton;
+            SimLog.MapInfo($"Using serialized MapSkeleton '{_mapSkeleton.name}'");
             return MapLoader.Load(_mapSkeleton);
         }
 

@@ -25,6 +25,7 @@ namespace TrafficSim.Core
         public IList<OrderInstance> DispatchOrders { get; set; }
         public OverloadSystem Overload { get; set; }
         public RoadGraph Graph { get; set; }
+        public HouseRegistry Houses { get; set; }
         public List<HubDef> ActiveHubDefs { get; set; }
         public Dictionary<ServiceModule, ServiceModuleDef> ModuleDefLookup { get; set; }
         public Dictionary<ServiceModule, HubDef> HubDefLookup { get; set; }

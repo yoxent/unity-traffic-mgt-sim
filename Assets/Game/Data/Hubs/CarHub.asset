@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: CarHub
   m_EditorClassIdentifier: 
   module: 0
+  footprint: {x: 3, y: 3}
   capacity: 4
   dailyUpkeep: 15
   relocateCost: 75

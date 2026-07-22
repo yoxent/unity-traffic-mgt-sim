@@ -300,7 +300,7 @@ Per-type stats (SO-configured): speed, range/distance capability, durability max
 
 - **View:** 2D orthographic top-down (not isometric).
 - **RMB + drag:** pan camera.
-- **Mouse wheel:** zoom (clamped min/max; LitMotion settle for bouncy feel).
+- **Mouse wheel:** zoom (clamped min/max; LitMotion `OutQuad` settle — no bounce/overshoot).
 - **Keyboard + mouse** via Input System.
 - Service colors on **fleet vehicles only**; destinations use icons/shapes (not destination color-coding).
 

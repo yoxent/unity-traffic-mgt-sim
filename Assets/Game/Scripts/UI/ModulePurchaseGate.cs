@@ -48,20 +48,25 @@ namespace TrafficSim.UI
 
         public bool TryPurchase(ServiceModule module, RunState state, ServiceModuleDef def)
         {
-            if (!CanPurchase(module, state, def, out _))
+            if (!CanPurchase(module, state, def, out var blockReason))
+            {
+                SimLog.ModuleInfo($"Purchase blocked {module}: {blockReason}");
                 return false;
+            }
 
             if (state.UnlockedModules.Count == 0)
             {
                 TutorialSaveStub.SetFreeModuleChoice(module);
-            }
-            else
-            {
-                state.Money -= def.unlockCost;
-                _lastPaidUnlockDay = state.DayIndex;
+                state.UnlockedModules.Add(module);
+                SimLog.ModuleInfo($"Free module chosen: {module}");
+                return true;
             }
 
+            state.Money -= def.unlockCost;
+            _lastPaidUnlockDay = state.DayIndex;
             state.UnlockedModules.Add(module);
+            SimLog.ModuleInfo(
+                $"Purchased {module} cost={def.unlockCost:F0} money={state.Money:F0} day={state.DayIndex}");
             return true;
         }
     }

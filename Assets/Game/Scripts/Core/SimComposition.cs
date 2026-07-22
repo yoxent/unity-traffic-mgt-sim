@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using TrafficSim.Core.Contracts;
+using TrafficSim.Core.Linq;
 using TrafficSim.Data;
 using TrafficSim.Demand;
 using TrafficSim.Dispatch;
@@ -12,8 +13,10 @@ namespace TrafficSim.Core
 {
     public static class SimComposition
     {
-        public static SimSession Build(SimBootstrapConfig config, RoadGraph graph)
+        public static SimSession Build(SimBootstrapConfig config, MapLoadResult map)
         {
+            var graph = map.Graph;
+            var skeleton = map.Skeleton;
             var moduleDefLookup = BuildModuleLookup(config.ModuleDefs);
             var hubDefLookup = BuildHubLookup(config.HubDefs);
             var vehicleDefLookup = BuildVehicleLookup(config.VehicleDefs);
@@ -24,12 +27,16 @@ namespace TrafficSim.Core
             var rating = new RatingSystem(state, config.RatingDef);
             var economy = new EconomySystem(state, config.RatingDef);
             var fleet = new FleetManager(state, eodQueue);
-            var hubManager = new HubManager(state, eodQueue);
+            var hubManager = new HubManager(
+                state,
+                eodQueue,
+                resolvePickupNodeFromSlot: CreatePickupNodeResolver(skeleton, graph));
             var demand = new DemandSpawner(
                 config.DemandWaveDef,
                 config.DayLengthSeconds,
                 moduleDefLookup,
-                graph);
+                graph,
+                map.Houses);
             var dispatchOrders = new List<OrderInstance>();
             var dispatch = new DispatchService(
                 fleet,
@@ -62,6 +69,7 @@ namespace TrafficSim.Core
                 DispatchOrders = dispatchOrders,
                 Overload = overload,
                 Graph = graph,
+                Houses = map.Houses,
                 ActiveHubDefs = activeHubDefs,
                 ModuleDefLookup = moduleDefLookup,
                 HubDefLookup = hubDefLookup,
@@ -115,6 +123,21 @@ namespace TrafficSim.Core
             }
 
             return lookup;
+        }
+
+        static System.Func<int, int> CreatePickupNodeResolver(MapSkeleton skeleton, RoadGraph graph)
+        {
+            if (skeleton?.hubSlotPositions == null || graph == null || graph.NodeCount == 0)
+                return null;
+
+            var slots = skeleton.hubSlotPositions;
+            return slotId =>
+            {
+                if (slotId < 0 || slotId >= slots.Length)
+                    return 0;
+
+                return SimLinq.FindNearestNodeIndex(graph, slots[slotId]);
+            };
         }
     }
 }

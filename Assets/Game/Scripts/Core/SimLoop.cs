@@ -82,6 +82,7 @@ namespace TrafficSim.Core
                 !_session.HubDefLookup.TryGetValue(module, out var hubDef) ||
                 !_session.VehicleDefLookup.TryGetValue(moduleDef.starterVehicleType, out var vehicleDef))
             {
+                SimLog.Warn("Module", $"Init skipped for {module} — missing module/hub/vehicle def.");
                 return;
             }
 
@@ -90,15 +91,24 @@ namespace TrafficSim.Core
                 _session.Hubs.UnlockSlot(slotId);
 
             if (!_session.Hubs.PlaceHub(hubDef, slotId))
+            {
+                SimLog.Warn("Module", $"Init failed for {module} — could not place hub on slot {slotId}.");
                 return;
+            }
 
             _session.ActiveHubDefs.Add(hubDef);
 
+            var bought = 0;
             for (var i = 0; i < moduleDef.starterVehicleCount; i++)
-                _session.Fleet.BuyVehicle(module, vehicleDef);
+            {
+                if (_session.Fleet.BuyVehicle(module, vehicleDef))
+                    bought++;
+            }
 
             PositionFleetAtSlot(module, slotId);
             _initializedModules.Add(module);
+            SimLog.ModuleInfo(
+                $"Initialized {module} hubSlot={slotId} starters={bought}/{moduleDef.starterVehicleCount} type={vehicleDef.type} money={_session.State.Money:F0}");
         }
 
         void PositionFleetAtSlot(ServiceModule module, int slotId)
@@ -174,17 +184,26 @@ namespace TrafficSim.Core
 
                 if (order.State == OrderState.Completed && !_processedCompletions.Contains(order.Id))
                 {
+                    var starsBefore = _session.State.CurrentStars;
+                    var moneyBefore = _session.State.Money;
                     _session.Rating.ApplyJobOutcome(order.RemainingFraction);
                     _session.Economy.OnJobCompleted(order, _session.State.CurrentStars);
                     _orderCompletedChannel?.Raise(new OrderEventPayload(order.Id, order.Module));
                     _processedCompletions.Add(order.Id);
+                    SimLog.EconomyInfo(
+                        $"Order {order.Id} ({order.Module}) completed rem={order.RemainingFraction:P0} " +
+                        $"stars {starsBefore:F1}→{_session.State.CurrentStars:F1} money {moneyBefore:F0}→{_session.State.Money:F0}");
                     continue;
                 }
 
                 if (order.State == OrderState.Expired && !_processedExpirations.Contains(order.Id))
                 {
+                    var starsBefore = _session.State.CurrentStars;
                     _session.Rating.ApplyJobOutcome(order.RemainingFraction);
                     _processedExpirations.Add(order.Id);
+                    SimLog.RatingInfo(
+                        $"Order {order.Id} ({order.Module}) expired rem={order.RemainingFraction:P0} " +
+                        $"stars {starsBefore:F1}→{_session.State.CurrentStars:F1}");
                 }
             }
         }
@@ -192,7 +211,15 @@ namespace TrafficSim.Core
         void MonitorRunFailure()
         {
             if (_lastPhase != RunPhase.Failed && _session.State.Phase == RunPhase.Failed)
+            {
+                SimLog.PhaseInfo(
+                    $"RUN FAILED day={_session.State.DayIndex} stars={_session.State.CurrentStars:F1} " +
+                    $"money={_session.State.Money:F0} pending={_session.Hubs.GetUnassignedOrderCount()}");
                 _runFailedChannel?.Raise();
+            }
+
+            if (_lastPhase != _session.State.Phase)
+                SimLog.PhaseInfo($"Phase {_lastPhase} → {_session.State.Phase}");
 
             _lastPhase = _session.State.Phase;
         }
